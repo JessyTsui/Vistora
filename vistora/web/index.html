@@ -46,7 +46,7 @@
           <label>输入路径</label>
           <input id="input_path" required placeholder="/path/to/video.mp4 or folder">
           <label>输出路径</label>
-          <input id="output_path" placeholder="/path/to/output.mp4">
+          <input id="output_path" placeholder="可留空，默认写入 outputs/">
           <div class="row">
             <div>
               <label>User ID</label>
@@ -61,6 +61,7 @@
             <div>
               <label>Runner</label>
               <select id="runner">
+                <option value="auto" selected>auto</option>
                 <option value="dry-run">dry-run</option>
                 <option value="lada-cli">lada-cli</option>
               </select>
@@ -75,8 +76,8 @@
               <label>质量档位</label>
               <select id="quality_tier">
                 <option value="balanced">balanced</option>
-                <option value="high" selected>high</option>
-                <option value="ultra">ultra</option>
+                <option value="high">high</option>
+                <option value="ultra" selected>ultra</option>
               </select>
             </div>
             <div>

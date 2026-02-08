@@ -24,8 +24,16 @@ def build_container(settings: Settings | None = None) -> AppContainer:
     resolved.runtime_dir.mkdir(parents=True, exist_ok=True)
 
     ledger = CreditLedger(JsonStore(resolved.ledger_path))
+    if resolved.bootstrap_credit_amount > 0:
+        current = ledger.get_balance(resolved.bootstrap_credit_user).balance
+        if current < resolved.bootstrap_credit_amount:
+            ledger.topup(
+                user_id=resolved.bootstrap_credit_user,
+                amount=resolved.bootstrap_credit_amount - current,
+                reason="bootstrap_credit",
+            )
     profiles = ProfileStore(JsonStore(resolved.profiles_path))
-    jobs = JobManager(ledger=ledger)
+    jobs = JobManager(ledger=ledger, enforce_credits=resolved.enforce_credits)
     tg_ops = TelegramOpsService(ledger=ledger)
 
     return AppContainer(

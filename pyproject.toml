@@ -21,6 +21,7 @@ dev = [
 ]
 
 [project.scripts]
+vistora = "vistora.cli:main"
 vistora-web = "vistora.app.main:main"
 vistora-cli = "vistora.cli:main"
 

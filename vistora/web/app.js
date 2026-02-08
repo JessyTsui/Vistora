@@ -115,7 +115,7 @@ function renderJobs() {
     if (job.status === "failed") failed += 1;
 
     const tr = document.createElement("tr");
-    const canCancel = job.status === "queued";
+    const canCancel = job.status === "queued" || job.status === "running";
     const modelText = `${job.detector_model} / ${job.restorer_model}${job.refiner_model ? ` / ${job.refiner_model}` : ""}`;
     const progressPct = Math.round((job.progress || 0) * 100);
     tr.innerHTML = `

@@ -2,11 +2,10 @@
 
 Quality-first video restoration workspace with:
 
-- FastAPI service
-- Web console
-- CLI client
-- job queue + credits + profiles
-- benchmark and paper-oriented planning docs
+- Local serial CLI (`vistora run`) with default best-quality presets
+- FastAPI + Web console (`vistora serve`)
+- Credit ledger, profiles, Telegram webhook simulation
+- Model/benchmark/paper planning docs
 
 ## 60-Second Quick Start
 
@@ -15,34 +14,69 @@ cd ~/dev/vistora
 python3.13 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
-vistora-web --host 127.0.0.1 --port 8585
 ```
 
-Open: `http://127.0.0.1:8585`
-
-## CLI Quick Start
-
-In another terminal:
+## Fastest Path: Local CLI Run
 
 ```bash
-cd ~/dev/vistora
-source .venv/bin/activate
-vistora-cli health
-vistora-cli jobs create --input /tmp/in.mp4 --output /tmp/out.mp4 --user demo --quality high
-vistora-cli jobs list
-vistora-cli credits topup demo 50 --reason init
+vistora run /path/to/input.mp4
+```
+
+Behavior:
+
+- Serial execution (no worker/queue setup required)
+- Default output auto-generated in `outputs/`
+- Default runner `auto` (`lada-cli` if available, else `dry-run`)
+- Default quality `ultra`
+- Live progress includes stage, percent, FPS, ETA, elapsed time
+
+Useful examples:
+
+```bash
+# explicit output file
+vistora run /path/to/input.mp4 --output /path/to/result.mp4
+
+# only choose output directory
+vistora run /path/to/input.mp4 --output-dir ./outputs
+
+# JSON output for scripts
+vistora run /path/to/input.mp4 --json
+```
+
+## Web UI / API Mode
+
+Start service:
+
+```bash
+vistora serve --host 127.0.0.1 --port 8585
+```
+
+Open:
+
+- `http://127.0.0.1:8585`
+
+The web form now defaults to `runner=auto`, `quality=ultra`, and output path can be left empty.
+
+## API CLI (Optional)
+
+If the service is running, you can still use API-style commands:
+
+```bash
+vistora health
+vistora capabilities
+vistora models
+vistora jobs create --input /tmp/in.mp4 --user demo
+vistora jobs list
+vistora credits topup demo 50 --reason init
 ```
 
 Default API base URL is `http://127.0.0.1:8585`.
-Override with:
 
 ```bash
 export VISTORA_BASE_URL="http://127.0.0.1:8585"
 ```
 
 ## For AI Agents
-
-If you are an AI coding agent, use this minimum loop:
 
 ```bash
 cd ~/dev/vistora
@@ -52,6 +86,13 @@ python -m py_compile $(rg --files -g '*.py' vistora tests)
 pytest -q
 ```
 
+CLI smoke check:
+
+```bash
+echo "dummy" > /tmp/vistora_in.mp4
+vistora run /tmp/vistora_in.mp4 --runner dry-run --quality balanced --json
+```
+
 Main extension points:
 
 - API routes: `vistora/api/`
@@ -59,21 +100,6 @@ Main extension points:
 - app composition: `vistora/app/container.py`, `vistora/app/main.py`
 - web console: `vistora/web/`
 - schemas: `vistora/core.py`
-
-## Run Modes
-
-1. Web + API
-
-```bash
-vistora-web --host 127.0.0.1 --port 8585 --reload
-```
-
-2. CLI against running API
-
-```bash
-vistora-cli capabilities
-vistora-cli models
-```
 
 ## Project Layout
 

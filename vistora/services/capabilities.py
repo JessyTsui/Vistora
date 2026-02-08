@@ -22,12 +22,13 @@ def detect_devices() -> list[str]:
 
 
 def build_capabilities() -> SystemCapabilityView:
+    default_runner = "auto"
     return SystemCapabilityView(
         devices=detect_devices(),
-        runners=["dry-run", "lada-cli"],
+        runners=["auto", "dry-run", "lada-cli"],
         quality_tiers=["balanced", "high", "ultra"],
         defaults={
-            "runner": "dry-run",
-            "quality_tier": "high",
+            "runner": default_runner,
+            "quality_tier": "ultra",
         },
     )
