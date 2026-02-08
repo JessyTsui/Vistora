@@ -1,0 +1,29 @@
+project: vistora
+seed: 42
+hardware:
+  gpu: "TODO"
+  cpu: "TODO"
+  ram_gb: 0
+
+datasets:
+  - name: short_dense
+    path: /path/to/short_dense
+  - name: mixed_sparse
+    path: /path/to/mixed_sparse
+  - name: long_stability
+    path: /path/to/long_stability
+
+variants:
+  - name: balanced_baseline
+    runner: lada-cli
+    quality_tier: balanced
+  - name: high_quality_default
+    runner: lada-cli
+    quality_tier: high
+  - name: ultra_quality_max
+    runner: lada-cli
+    quality_tier: ultra
+
+metrics:
+  runtime: [fps, stage_latency_ms, gpu_mem_mb]
+  quality: [psnr, ssim, lpips]

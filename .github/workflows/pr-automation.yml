@@ -1,0 +1,60 @@
+name: PR Automation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  summarize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect changed areas
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            backend:
+              - 'vistora/**/*.py'
+            frontend:
+              - 'vistora/web/**'
+            docs:
+              - 'docs/**'
+              - 'README.md'
+            tests:
+              - 'tests/**'
+            ci:
+              - '.github/workflows/**'
+
+      - name: Build PR summary markdown
+        run: |
+          cat << 'EOF' > pr_summary.md
+          ## Vistora PR Bot
+
+          Auto-detected impact areas for this PR:
+
+          - Backend: `${{ steps.changes.outputs.backend }}`
+          - Frontend: `${{ steps.changes.outputs.frontend }}`
+          - Docs: `${{ steps.changes.outputs.docs }}`
+          - Tests: `${{ steps.changes.outputs.tests }}`
+          - CI: `${{ steps.changes.outputs.ci }}`
+
+          Recommended checklist before merge:
+
+          - [ ] API or behavior changes are documented in README/docs.
+          - [ ] Tests cover the main changed path.
+          - [ ] UI change (if any) has mobile behavior checked.
+          - [ ] New config/env vars are documented.
+          EOF
+
+      - name: Post sticky PR comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: vistora-pr-bot
+          path: pr_summary.md

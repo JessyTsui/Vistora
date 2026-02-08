@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Vistora Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/web/app.css">
+</head>
+<body>
+  <div class="ambient a" aria-hidden="true"></div>
+  <div class="ambient b" aria-hidden="true"></div>
+  <div class="ambient c" aria-hidden="true"></div>
+  <main class="shell">
+    <header class="hero card">
+      <div class="hero-top">
+        <div>
+          <p class="label">VISTORA OPS DECK</p>
+          <h1>Quality-First Video Restoration Console</h1>
+          <p class="sub">本地优先的控制台，覆盖任务编排、质量档位、积分账本、配置模板和 Telegram 运营联调。</p>
+        </div>
+        <div class="status-pane">
+          <p class="status-title">Service</p>
+          <p id="service_status" class="status-badge offline">offline</p>
+          <button type="button" id="refresh_all" class="secondary">Refresh All</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="stats" aria-label="job stats">
+      <article><h2>Queued</h2><p id="s-queued">0</p><small>待处理</small></article>
+      <article><h2>Running</h2><p id="s-running">0</p><small>处理中</small></article>
+      <article><h2>Done</h2><p id="s-done">0</p><small>已完成</small></article>
+      <article><h2>Failed</h2><p id="s-failed">0</p><small>失败</small></article>
+    </section>
+
+    <section class="grid two tilt">
+      <article class="card">
+        <div class="title-row">
+          <h2>创建任务</h2>
+          <span class="chip">Pipeline</span>
+        </div>
+        <form id="job-form">
+          <label>输入路径</label>
+          <input id="input_path" required placeholder="/path/to/video.mp4 or folder">
+          <label>输出路径</label>
+          <input id="output_path" placeholder="/path/to/output.mp4">
+          <div class="row">
+            <div>
+              <label>User ID</label>
+              <input id="user_id" value="anonymous">
+            </div>
+            <div>
+              <label>预估积分</label>
+              <input id="estimated_credits" type="number" min="1" placeholder="自动估算">
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Runner</label>
+              <select id="runner">
+                <option value="dry-run">dry-run</option>
+                <option value="lada-cli">lada-cli</option>
+              </select>
+            </div>
+            <div>
+              <label>Profile</label>
+              <input id="profile_name" placeholder="hq-fast">
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>质量档位</label>
+              <select id="quality_tier">
+                <option value="balanced">balanced</option>
+                <option value="high" selected>high</option>
+                <option value="ultra">ultra</option>
+              </select>
+            </div>
+            <div>
+              <label>时长估算(秒)</label>
+              <input id="duration_hint_seconds" type="number" min="1" placeholder="用于自动估算积分">
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>检测模型</label>
+              <select id="detector_model"></select>
+            </div>
+            <div>
+              <label>恢复模型</label>
+              <select id="restorer_model"></select>
+            </div>
+          </div>
+          <label>后处理模型</label>
+          <select id="refiner_model"></select>
+          <div class="buttons">
+            <button type="submit" class="primary">创建任务</button>
+            <button type="button" id="refresh_jobs" class="secondary">刷新任务</button>
+          </div>
+        </form>
+      </article>
+
+      <article class="card">
+        <div class="title-row">
+          <h2>积分管理</h2>
+          <span class="chip">Billing</span>
+        </div>
+        <form id="credit-form">
+          <label>User ID</label>
+          <input id="credit_user" value="anonymous">
+          <div class="row">
+            <div>
+              <label>充值积分</label>
+              <input id="credit_amount" type="number" min="1" value="10">
+            </div>
+            <div>
+              <label>原因</label>
+              <input id="credit_reason" value="manual_topup">
+            </div>
+          </div>
+          <div class="buttons">
+            <button type="button" id="query_balance" class="secondary">查询余额</button>
+            <button type="submit" class="primary">充值</button>
+          </div>
+          <p id="balance_view" class="mono panel">Balance: -</p>
+        </form>
+      </article>
+    </section>
+
+    <section class="grid two tilt">
+      <article class="card">
+        <div class="title-row">
+          <h2>Profile 模板</h2>
+          <span class="chip">Config</span>
+        </div>
+        <form id="profile-form">
+          <label>Profile name</label>
+          <input id="pf_name" placeholder="hq-fast" required>
+          <label>Settings JSON</label>
+          <textarea id="pf_json" rows="8">{ "fp16": true, "max_clip_length": 180 }</textarea>
+          <div class="buttons">
+            <button type="submit" class="primary">保存模板</button>
+            <button type="button" id="refresh_profiles" class="secondary">读取模板</button>
+          </div>
+        </form>
+        <pre id="profiles_view" class="mono"></pre>
+      </article>
+
+      <article class="card">
+        <h2>Telegram webhook 测试</h2>
+        <form id="tg-form">
+          <div class="row">
+            <div>
+              <label>Event</label>
+              <select id="tg_event">
+                <option value="ping">ping</option>
+                <option value="balance">balance</option>
+              <option value="topup">topup</option>
+            </select>
+          </div>
+          <div>
+            <label>User ID</label>
+              <input id="tg_user" value="anonymous">
+            </div>
+          </div>
+          <label>Payload JSON</label>
+          <textarea id="tg_payload" rows="6">{ "amount": 5, "reason": "tg_test" }</textarea>
+          <button type="submit" class="primary">发送 webhook</button>
+        </form>
+        <pre id="tg_result" class="mono panel"></pre>
+      </article>
+    </section>
+
+    <section class="card">
+      <div class="title-row">
+        <h2>任务列表</h2>
+        <span class="chip">Queue</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>User</th><th>Status</th><th>Quality</th><th>Models</th><th>Stage</th><th>Progress</th><th>Credits</th><th>Updated</th><th>Action</th></tr>
+          </thead>
+          <tbody id="job_rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <div id="toast"></div>
+  <script src="/web/app.js"></script>
+</body>
+</html>
