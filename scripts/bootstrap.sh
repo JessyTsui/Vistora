@@ -4,9 +4,11 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT_DIR}"
 
-python3.13 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e ".[dev]"
+if ! command -v uv >/dev/null 2>&1; then
+  echo "uv is required. Install: https://docs.astral.sh/uv/getting-started/installation/"
+  exit 1
+fi
 
-echo "Bootstrap complete. Activate with: source .venv/bin/activate"
+uv sync --extra dev --frozen
+
+echo "Bootstrap complete. Run commands with: uv run <command>"

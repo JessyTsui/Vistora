@@ -9,17 +9,17 @@ Quality-first video restoration workspace with:
 
 ## 60-Second Quick Start
 
+Install `uv` first if needed: <https://docs.astral.sh/uv/getting-started/installation/>
+
 ```bash
 cd ~/dev/vistora
-python3.13 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
+uv sync --frozen --extra dev
 ```
 
 ## Fastest Path: Local CLI Run
 
 ```bash
-vistora run /path/to/input.mp4
+uv run vistora run /path/to/input.mp4
 ```
 
 Behavior:
@@ -34,13 +34,13 @@ Useful examples:
 
 ```bash
 # explicit output file
-vistora run /path/to/input.mp4 --output /path/to/result.mp4
+uv run vistora run /path/to/input.mp4 --output /path/to/result.mp4
 
 # only choose output directory
-vistora run /path/to/input.mp4 --output-dir ./outputs
+uv run vistora run /path/to/input.mp4 --output-dir ./outputs
 
 # JSON output for scripts
-vistora run /path/to/input.mp4 --json
+uv run vistora run /path/to/input.mp4 --json
 ```
 
 ## Web UI / API Mode
@@ -48,7 +48,7 @@ vistora run /path/to/input.mp4 --json
 Start service:
 
 ```bash
-vistora serve --host 127.0.0.1 --port 8585
+uv run vistora serve --host 127.0.0.1 --port 8585
 ```
 
 Open:
@@ -62,12 +62,12 @@ The web form now defaults to `runner=auto`, `quality=ultra`, and output path can
 If the service is running, you can still use API-style commands:
 
 ```bash
-vistora health
-vistora capabilities
-vistora models
-vistora jobs create --input /tmp/in.mp4 --user demo
-vistora jobs list
-vistora credits topup demo 50 --reason init
+uv run vistora health
+uv run vistora capabilities
+uv run vistora models
+uv run vistora jobs create --input /tmp/in.mp4 --user demo
+uv run vistora jobs list
+uv run vistora credits topup demo 50 --reason init
 ```
 
 Default API base URL is `http://127.0.0.1:8585`.
@@ -80,17 +80,16 @@ export VISTORA_BASE_URL="http://127.0.0.1:8585"
 
 ```bash
 cd ~/dev/vistora
-source .venv/bin/activate
-pip install -e ".[dev]"
-python -m py_compile $(rg --files -g '*.py' vistora tests)
-pytest -q
+uv sync --frozen --extra dev
+uv run python -m py_compile $(rg --files -g '*.py' vistora tests)
+uv run pytest -q
 ```
 
 CLI smoke check:
 
 ```bash
 echo "dummy" > /tmp/vistora_in.mp4
-vistora run /tmp/vistora_in.mp4 --runner dry-run --quality balanced --json
+uv run vistora run /tmp/vistora_in.mp4 --runner dry-run --quality balanced --json
 ```
 
 Main extension points:
@@ -128,9 +127,21 @@ vistora/
 
 Workflows in `.github/workflows/`:
 
-- `ci.yml`: compile + tests + package build (PR and main push)
+- `ci.yml`: lockfile check + locked sync + compile/tests/CLI smoke/package build
 - `pr-automation.yml`: sticky PR summary comment based on changed areas
 - `dependency-review.yml`: dependency risk check on PR
+- `.github/dependabot.yml`: weekly dependency and GitHub Actions update PRs
+
+## Dependency Management Standard
+
+- Source of truth: `pyproject.toml`
+- Reproducible lockfile: `uv.lock` (committed)
+- CI installs from lock: `uv sync --frozen --extra dev`
+- Update lock after dependency changes:
+
+```bash
+uv lock
+```
 
 ## Useful Scripts
 
