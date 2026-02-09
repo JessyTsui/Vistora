@@ -1,30 +1,30 @@
 {
   "version": 1,
   "notes": [
-    "Copy this file to models/manifest.json, then replace URL/path fields with real model sources.",
-    "sha256 is optional but strongly recommended for integrity verification."
+    "This manifest is a bootstrap baseline with pinned SHA256 values.",
+    "You can replace model entries with your own URLs or local paths as needed."
   ],
   "models": [
     {
-      "id": "detector.mask2former_swinl",
-      "filename": "mask2former_swinl.pt",
-      "url": "https://example.com/models/mask2former_swinl.pt",
-      "sha256": "",
-      "description": "Quality-first detector for hard boundaries."
+      "id": "detector.yolo11n-seg",
+      "filename": "yolo11n-seg.pt",
+      "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n-seg.pt",
+      "sha256": "55ed65c56c91713d23e8402371c6c49a6fd84f257f7dce452e8d70e41dcbe152",
+      "description": "Lightweight segmentation detector baseline."
     },
     {
-      "id": "restorer.vrt_large",
-      "filename": "vrt_large.pth",
-      "url": "https://example.com/models/vrt_large.pth",
-      "sha256": "",
-      "description": "Quality-first restoration backbone."
+      "id": "restorer.realesr-general-x4v3",
+      "filename": "realesr-general-x4v3.pth",
+      "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-general-x4v3.pth",
+      "sha256": "8dc7edb9ac80ccdc30c3a5dca6616509367f05fbc184ad95b731f05bece96292",
+      "description": "General restoration model from Real-ESRGAN."
     },
     {
-      "id": "refiner.diffusion_video",
-      "filename": "diffusion_video_refiner.safetensors",
-      "url": "https://example.com/models/diffusion_video_refiner.safetensors",
-      "sha256": "",
-      "description": "Optional heavy refiner for best perceptual quality."
+      "id": "refiner.realesr-general-wdn-x4v3",
+      "filename": "realesr-general-wdn-x4v3.pth",
+      "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-general-wdn-x4v3.pth",
+      "sha256": "1641f8c4464b9f097c9fdda5589273713f67cf59f3d909e0bd688f0cee269dca",
+      "description": "Denoise-leaning companion model for dni mixing."
     }
   ]
 }

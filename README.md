@@ -32,10 +32,10 @@ uv sync --frozen --extra dev
 `vistora setup-models` prepares model files from a manifest:
 
 ```bash
-# 1) create/edit your manifest
+# 1) bootstrap from pinned baseline manifest
 cp models/manifest.example.json models/manifest.json
 
-# 2) download or copy model files into models/assets
+# 2) download/copy model files into models/assets (with sha256 verification)
 uv run vistora setup-models --manifest models/manifest.json --output-dir models/assets
 ```
 
@@ -52,6 +52,12 @@ Manifest item supports either remote URL or local path:
 ```
 
 If `models/manifest.json` does not exist, running `uv run vistora setup-models` will auto-generate a template file for you.
+
+The tracked `models/manifest.example.json` already includes a runnable baseline with pinned SHA256 values:
+
+- `detector.yolo11n-seg`
+- `restorer.realesr-general-x4v3`
+- `refiner.realesr-general-wdn-x4v3`
 
 ## Fastest Path: Local CLI Run
 
