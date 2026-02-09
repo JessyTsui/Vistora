@@ -23,6 +23,7 @@
   - `job_manager.py`: serial job execution + lifecycle state
   - `credits.py`: persistent credit ledger
   - `model_catalog.py`: quality-tier model selection
+  - `model_setup.py`: manifest-based model preparation and integrity verification
   - `runners.py`: backend runner abstraction
   - `serial_run.py`: local one-shot CLI execution with FPS/ETA reporting
 

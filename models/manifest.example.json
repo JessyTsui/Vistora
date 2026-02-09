@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "notes": [
+    "Copy this file to models/manifest.json, then replace URL/path fields with real model sources.",
+    "sha256 is optional but strongly recommended for integrity verification."
+  ],
+  "models": [
+    {
+      "id": "detector.mask2former_swinl",
+      "filename": "mask2former_swinl.pt",
+      "url": "https://example.com/models/mask2former_swinl.pt",
+      "sha256": "",
+      "description": "Quality-first detector for hard boundaries."
+    },
+    {
+      "id": "restorer.vrt_large",
+      "filename": "vrt_large.pth",
+      "url": "https://example.com/models/vrt_large.pth",
+      "sha256": "",
+      "description": "Quality-first restoration backbone."
+    },
+    {
+      "id": "refiner.diffusion_video",
+      "filename": "diffusion_video_refiner.safetensors",
+      "url": "https://example.com/models/diffusion_video_refiner.safetensors",
+      "sha256": "",
+      "description": "Optional heavy refiner for best perceptual quality."
+    }
+  ]
+}

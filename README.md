@@ -7,6 +7,14 @@ Quality-first video restoration workspace with:
 - Credit ledger, profiles, Telegram webhook simulation
 - Model/benchmark/paper planning docs
 
+## Repository Intro (Multi-language)
+
+- English: Vistora is a quality-first video restoration engineering stack with local CLI, web console, and reproducible workflows for research and productization.
+- 中文: Vistora 是一个质量优先的视频修复工程化仓库，提供本地 CLI、Web 控制台和可复现的研发/产品化工作流。
+- 日本語: Vistora は高品質を重視した動画修復のエンジニアリング基盤で、ローカル CLI・Web UI・再現可能な開発フローを提供します。
+- Español: Vistora es una base de ingeniería para restauración de video orientada a la calidad, con CLI local, panel web y flujos reproducibles.
+- 한국어: Vistora는 품질 우선 비디오 복원을 위한 엔지니어링 스택으로, 로컬 CLI, 웹 콘솔, 재현 가능한 워크플로를 제공합니다.
+
 ## 60-Second Quick Start
 
 Install `uv` first if needed: <https://docs.astral.sh/uv/getting-started/installation/>
@@ -14,7 +22,36 @@ Install `uv` first if needed: <https://docs.astral.sh/uv/getting-started/install
 ```bash
 cd ~/dev/vistora
 uv sync --frozen --extra dev
+
+# optional: bootstrap env + run model setup template/download flow
+./scripts/bootstrap.sh --with-models
 ```
+
+## Model Setup (Real Inference Prerequisite)
+
+`vistora setup-models` prepares model files from a manifest:
+
+```bash
+# 1) create/edit your manifest
+cp models/manifest.example.json models/manifest.json
+
+# 2) download or copy model files into models/assets
+uv run vistora setup-models --manifest models/manifest.json --output-dir models/assets
+```
+
+Manifest item supports either remote URL or local path:
+
+```json
+{
+  "id": "restorer.vrt_large",
+  "filename": "vrt_large.pth",
+  "url": "https://your-domain/models/vrt_large.pth",
+  "path": "/optional/local/source/vrt_large.pth",
+  "sha256": "optional_64_hex_sha256"
+}
+```
+
+If `models/manifest.json` does not exist, running `uv run vistora setup-models` will auto-generate a template file for you.
 
 ## Fastest Path: Local CLI Run
 
@@ -30,6 +67,11 @@ Behavior:
 - Default quality `ultra`
 - Live progress includes stage, percent, FPS, ETA, elapsed time
 
+For real restoration quality, make sure:
+
+- `lada-cli` is installed and available in PATH
+- model files are prepared via `vistora setup-models`
+
 Useful examples:
 
 ```bash
@@ -41,6 +83,9 @@ uv run vistora run /path/to/input.mp4 --output-dir ./outputs
 
 # JSON output for scripts
 uv run vistora run /path/to/input.mp4 --json
+
+# force real runner
+uv run vistora run /path/to/input.mp4 --runner lada-cli
 ```
 
 ## Web UI / API Mode
@@ -92,6 +137,12 @@ echo "dummy" > /tmp/vistora_in.mp4
 uv run vistora run /tmp/vistora_in.mp4 --runner dry-run --quality balanced --json
 ```
 
+Model setup smoke check:
+
+```bash
+uv run vistora setup-models --dry-run
+```
+
 Main extension points:
 
 - API routes: `vistora/api/`
@@ -112,6 +163,7 @@ vistora/
     core.py       # request/response models
   tests/
   docs/
+  models/         # model manifests and local assets (assets ignored by git)
   scripts/
 ```
 

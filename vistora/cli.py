@@ -10,6 +10,7 @@ import urllib.parse
 import urllib.request
 from typing import Any
 
+from vistora.services.model_setup import ModelSetupResult, setup_models
 from vistora.services.serial_run import LocalRunResult, run_local_serial
 
 DEFAULT_BASE_URL = os.getenv("VISTORA_BASE_URL", "http://127.0.0.1:8585")
@@ -133,6 +134,18 @@ def _local_result_to_dict(result: LocalRunResult) -> dict[str, Any]:
     }
 
 
+def _setup_result_to_dict(result: ModelSetupResult) -> dict[str, Any]:
+    return {
+        "manifest_path": result.manifest_path,
+        "output_dir": result.output_dir,
+        "created_template": result.created_template,
+        "total_models": result.total_models,
+        "downloaded": result.downloaded,
+        "skipped": result.skipped,
+        "failed": result.failed,
+    }
+
+
 def _print_local_human(result: LocalRunResult) -> None:
     print("Run complete")
     print(f"  input:   {result.input_path}")
@@ -145,6 +158,28 @@ def _print_local_human(result: LocalRunResult) -> None:
         print(f"  avg fps: {result.avg_fps:.2f}")
     if result.total_frames is not None:
         print(f"  frames:  {result.total_frames}")
+
+
+def _print_setup_human(result: ModelSetupResult) -> None:
+    if result.created_template:
+        print(f"Manifest template created: {result.manifest_path}")
+        print("Edit URL/path/sha256 entries and rerun `vistora setup-models`.")
+        return
+
+    print("Model setup complete")
+    print(f"  manifest:   {result.manifest_path}")
+    print(f"  output dir: {result.output_dir}")
+    print(f"  total:      {result.total_models}")
+    print(f"  downloaded: {len(result.downloaded)}")
+    if result.downloaded:
+        print(f"    ids:      {', '.join(result.downloaded)}")
+    print(f"  skipped:    {len(result.skipped)}")
+    if result.skipped:
+        print(f"    ids:      {', '.join(result.skipped)}")
+    print(f"  failed:     {len(result.failed)}")
+    if result.failed:
+        for item in result.failed:
+            print(f"    - {item.get('id', 'unknown')}: {item.get('reason', 'unknown error')}")
 
 
 def _cmd_run(args: argparse.Namespace) -> None:
@@ -204,6 +239,24 @@ def _cmd_run(args: argparse.Namespace) -> None:
         _print(_local_result_to_dict(result))
     else:
         _print_local_human(result)
+
+
+def _cmd_setup_models(args: argparse.Namespace) -> None:
+    result = setup_models(
+        manifest_path=args.manifest,
+        output_dir=args.output_dir,
+        force=args.force,
+        dry_run=args.dry_run,
+    )
+    if args.json:
+        _print(_setup_result_to_dict(result))
+    else:
+        _print_setup_human(result)
+
+    if result.failed and not args.allow_partial:
+        raise RuntimeError(
+            f"{len(result.failed)} model(s) failed. Re-run with --allow-partial to ignore failures."
+        )
 
 
 def _cmd_serve(args: argparse.Namespace) -> None:
@@ -328,6 +381,15 @@ def _build_parser() -> argparse.ArgumentParser:
     p_run.add_argument("--progress-interval", type=float, default=0.2, help="Progress refresh interval in seconds")
     p_run.add_argument("--json", action="store_true", help="Print final result as JSON")
     p_run.set_defaults(func=_cmd_run)
+
+    p_setup = sub.add_parser("setup-models", help="Prepare model files from a manifest")
+    p_setup.add_argument("--manifest", default="models/manifest.json", help="Model manifest JSON path")
+    p_setup.add_argument("--output-dir", default="models/assets", help="Output directory for model files")
+    p_setup.add_argument("--force", action="store_true", help="Re-download even when output file exists")
+    p_setup.add_argument("--dry-run", action="store_true", help="Validate manifest and print planned downloads only")
+    p_setup.add_argument("--allow-partial", action="store_true", help="Do not fail command when some models fail")
+    p_setup.add_argument("--json", action="store_true", help="Print result as JSON")
+    p_setup.set_defaults(func=_cmd_setup_models)
 
     p_serve = sub.add_parser("serve", help="Start local Vistora web/API service")
     p_serve.add_argument("--host", default=None, help="Bind host, default from settings/env")

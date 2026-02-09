@@ -11,4 +11,8 @@ fi
 
 uv sync --extra dev --frozen
 
+if [[ "${1:-}" == "--with-models" ]]; then
+  uv run vistora setup-models --manifest models/manifest.json --output-dir models/assets
+fi
+
 echo "Bootstrap complete. Run commands with: uv run <command>"
