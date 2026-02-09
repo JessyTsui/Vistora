@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import queue
 import threading
 import uuid
 from dataclasses import dataclass, field
@@ -8,6 +7,7 @@ from dataclasses import dataclass, field
 from vistora.core import JobCreateRequest, JobListView, JobStatus, JobView, utc_now
 from vistora.services.credits import CreditLedger
 from vistora.services.model_catalog import resolve_models
+from vistora.services.pathing import default_output_path
 from vistora.services.pricing import estimate_credits
 from vistora.services.runners import build_runner
 
@@ -47,27 +47,19 @@ class ManagedJob:
 
 
 class JobManager:
-    def __init__(self, ledger: CreditLedger):
+    def __init__(self, ledger: CreditLedger, enforce_credits: bool = False):
         self._ledger = ledger
+        self._enforce_credits = enforce_credits
         self._jobs: dict[str, ManagedJob] = {}
-        self._queue: queue.Queue[str | None] = queue.Queue()
         self._lock = threading.Lock()
-        self._worker: threading.Thread | None = None
-        self._stop_event = threading.Event()
 
     def start(self):
-        if self._worker and self._worker.is_alive():
-            return
-        self._stop_event.clear()
-        self._worker = threading.Thread(target=self._run_loop, daemon=True, name="vistora-job-worker")
-        self._worker.start()
+        # Serial manager has no background worker.
+        return
 
     def stop(self):
-        self._stop_event.set()
-        self._queue.put(None)
-        if self._worker:
-            self._worker.join(timeout=5)
-            self._worker = None
+        # Serial manager has no background worker.
+        return
 
     def create_job(self, req: JobCreateRequest) -> JobView:
         detector_model, restorer_model, refiner_model = resolve_models(
@@ -77,20 +69,29 @@ class JobManager:
             req.refiner_model,
         )
         estimated_credits = req.estimated_credits or estimate_credits(req.duration_hint_seconds, req.quality_tier)
+        output_path = req.output_path or default_output_path(req.input_path)
         resolved_req = req.model_copy(
             update={
                 "detector_model": detector_model,
                 "restorer_model": restorer_model,
                 "refiner_model": refiner_model,
                 "estimated_credits": estimated_credits,
+                "output_path": output_path,
             }
         )
         job_id = uuid.uuid4().hex
-        job = ManagedJob(id=job_id, request=resolved_req)
+        job = ManagedJob(
+            id=job_id,
+            request=resolved_req,
+            status="running",
+            stage="starting",
+            progress=0.01,
+        )
         with self._lock:
             self._jobs[job_id] = job
-            self._queue.put(job_id)
-            return job.to_view()
+        self._execute_job(job_id)
+        with self._lock:
+            return self._jobs[job_id].to_view()
 
     def get_job(self, job_id: str) -> JobView | None:
         with self._lock:
@@ -107,39 +108,29 @@ class JobManager:
             job = self._jobs.get(job_id)
             if job is None:
                 return None
-            if job.status == "queued":
+            if job.status in {"queued", "running"}:
                 job.status = "canceled"
                 job.stage = "canceled"
                 job.updated_at = utc_now()
             return job.to_view()
 
-    def _run_loop(self):
-        while not self._stop_event.is_set():
-            try:
-                job_id = self._queue.get(timeout=0.2)
-            except queue.Empty:
-                continue
-            if job_id is None:
+    def _execute_job(self, job_id: str):
+        with self._lock:
+            job = self._jobs.get(job_id)
+            if job is None or job.status == "canceled":
                 return
+            req = job.request
 
-            with self._lock:
-                job = self._jobs.get(job_id)
-                if job is None or job.status == "canceled":
-                    continue
-                job.status = "running"
-                job.stage = "starting"
-                job.progress = 0.01
-                job.updated_at = utc_now()
-
-            try:
-                reserve_txn = self._ledger.reserve(job.request.user_id, job.request.estimated_credits, ref_id=job.id)
-                self._set_reserved(job.id, abs(reserve_txn.amount))
-                runner = build_runner(job.request.runner)
-                runner.run(job.request, on_stage=lambda stage, progress: self._set_stage(job.id, stage, progress))
-            except Exception as exc:
-                self._on_failure(job.id, str(exc))
-            else:
-                self._on_done(job.id)
+        try:
+            if self._enforce_credits:
+                reserve_txn = self._ledger.reserve(req.user_id, req.estimated_credits, ref_id=job_id)
+                self._set_reserved(job_id, abs(reserve_txn.amount))
+            runner = build_runner(req.runner)
+            runner.run(req, on_stage=lambda stage, progress: self._set_stage(job_id, stage, progress))
+        except Exception as exc:
+            self._on_failure(job_id, str(exc))
+        else:
+            self._on_done(job_id)
 
     def _set_reserved(self, job_id: str, reserved: int):
         with self._lock:

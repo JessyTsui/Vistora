@@ -20,10 +20,11 @@
 3. `vistora/services/`
 - Business logic and stateful services.
 - Examples:
-  - `job_manager.py`: queue and worker lifecycle
+  - `job_manager.py`: serial job execution + lifecycle state
   - `credits.py`: persistent credit ledger
   - `model_catalog.py`: quality-tier model selection
   - `runners.py`: backend runner abstraction
+  - `serial_run.py`: local one-shot CLI execution with FPS/ETA reporting
 
 4. `vistora/core.py`
 - Shared request/response and domain models (Pydantic).

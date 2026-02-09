@@ -25,22 +25,33 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: "pip"
 
-      - name: Install dependencies
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Validate lockfile
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e ".[dev]"
+          uv lock --check
+
+      - name: Sync dependencies from lock
+        run: |
+          uv sync --frozen --extra dev --python ${{ matrix.python-version }}
 
       - name: Compile Python files
         run: |
-          python -m py_compile $(git ls-files '*.py')
+          uv run python -m py_compile $(git ls-files '*.py')
 
       - name: Run tests
         run: |
-          pytest -q
+          uv run pytest -q
+
+      - name: CLI smoke (serial run)
+        run: |
+          echo "dummy" > /tmp/vistora_in.mp4
+          uv run python -m vistora.cli run /tmp/vistora_in.mp4 --runner dry-run --quality balanced --json --option stage_sleep=0
 
       - name: Build package
         run: |
-          python -m pip install build
-          python -m build --sdist --wheel
+          uv run python -m build --sdist --wheel

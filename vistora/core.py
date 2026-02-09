@@ -16,8 +16,8 @@ class JobCreateRequest(BaseModel):
     profile_name: str | None = None
     estimated_credits: int | None = None
     duration_hint_seconds: int | None = None
-    runner: Literal["dry-run", "lada-cli"] = "dry-run"
-    quality_tier: QualityTier = "high"
+    runner: Literal["auto", "dry-run", "lada-cli"] = "auto"
+    quality_tier: QualityTier = "ultra"
     detector_model: str | None = None
     restorer_model: str | None = None
     refiner_model: str | None = None

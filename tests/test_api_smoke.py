@@ -54,7 +54,8 @@ def test_api_smoke_endpoints(tmp_path: pathlib.Path):
                 "output_path": "/tmp/out.mp4",
                 "user_id": "demo",
                 "runner": "dry-run",
-                "quality_tier": "high",
+                "quality_tier": "balanced",
+                "options": {"stage_sleep": 0},
             },
         )
         assert create.status_code == 200
