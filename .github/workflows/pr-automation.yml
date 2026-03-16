@@ -54,7 +54,7 @@ jobs:
           EOF
 
       - name: Post sticky PR comment
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v3
         with:
           header: vistora-pr-bot
           path: pr_summary.md
