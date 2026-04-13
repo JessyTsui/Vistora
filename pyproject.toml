@@ -13,7 +13,7 @@ dependencies = [
 [project.optional-dependencies]
 torch = [
   "torch>=2.8.0",
-  "torchvision>=0.23.0",
+  "torchvision>=0.26.0",
 ]
 dev = [
   "pytest>=8.3.0",
