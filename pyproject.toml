@@ -27,7 +27,7 @@ vistora-web = "vistora.app.main:main"
 vistora-cli = "vistora.cli:main"
 
 [build-system]
-requires = ["setuptools>=77.0.3"]
+requires = ["setuptools>=82.0.1"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
